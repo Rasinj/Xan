@@ -1,0 +1,41 @@
+site_name: Project Xanadu
+site_description: A reimagined implementation of Ted Nelson's hypertext vision
+site_author: Olle Nordesjo
+repo_url: https://github.com/Rasinj/Xan
+repo_name: Rasinj/Xan
+
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: pink
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - meta
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Concepts:
+    - Hypertext: concepts/hypertext.md
+    - Transclusion: concepts/transclusion.md
+    - Bidirectional Links: concepts/bidirectional-links.md
+  - Implementation: implementation.md
+  - About: about.md
