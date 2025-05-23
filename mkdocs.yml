@@ -37,5 +37,7 @@ nav:
     - Hypertext: concepts/hypertext.md
     - Transclusion: concepts/transclusion.md
     - Bidirectional Links: concepts/bidirectional-links.md
+    - Software Evolution: concepts/software-evolution.md
+    - Scientific Citations: concepts/scientific-citations.md
   - Implementation: implementation.md
   - About: about.md
