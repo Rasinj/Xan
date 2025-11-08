@@ -89,6 +89,52 @@
             box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.3);
         }
 
+        .edit-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #9c27b0;
+        }
+
+        .edit-panel h4 {
+            color: #6a1b9a;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .edit-section {
+            margin-bottom: 20px;
+        }
+
+        .edit-section label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #6a1b9a;
+        }
+
+        .edit-section textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+        }
+
+        .edit-section textarea:focus {
+            outline: none;
+            border-color: #9c27b0;
+            background: #fafafa;
+        }
+
         .parallel-view {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -247,6 +293,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             display: none;
             animation: slideIn 0.3s ease;
+            z-index: 1000;
         }
 
         @keyframes slideIn {
@@ -269,12 +316,13 @@
             transition: background 0.5s;
         }
 
-        .connection-line {
-            stroke: #9c27b0;
-            stroke-width: 2;
-            fill: none;
-            stroke-dasharray: 5, 5;
-            opacity: 0.6;
+        @keyframes updatePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .updating {
+            animation: updatePulse 0.3s ease;
         }
 
         .legend {
@@ -298,6 +346,20 @@
             height: 20px;
             border-radius: 4px;
         }
+
+        .edit-hint {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #2e7d32;
+        }
+
+        .edit-hint::before {
+            content: '✏️ ';
+        }
     </style>
 </head>
 <body>
@@ -310,21 +372,47 @@
         <div class="demo-area">
             <div class="controls">
                 <h3>🎮 Interactive Parallel Views</h3>
-                <p style="margin-bottom: 15px;">Select different content sections to see how they appear across different document contexts.</p>
-                <div class="button-group">
-                    <button onclick="highlightParagraph(1)" id="btn-1">Highlight Core Concept</button>
-                    <button onclick="highlightParagraph(2)" id="btn-2">Highlight Example</button>
-                    <button onclick="highlightParagraph(3)" id="btn-3">Highlight Benefits</button>
-                    <button onclick="clearHighlight()">Clear Highlights</button>
+                <p style="margin-bottom: 15px;">Edit the shared content below and watch it update automatically across all four document views!</p>
+
+                <div class="edit-panel">
+                    <h4>✏️ Edit Shared Content (Updates All Views)</h4>
+
+                    <div class="edit-section">
+                        <label>Shared Paragraph 1: Core Concept</label>
+                        <textarea id="shared-1" oninput="updateSharedContent(1)">Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</textarea>
+                    </div>
+
+                    <div class="edit-section">
+                        <label>Shared Paragraph 2: Example</label>
+                        <textarea id="shared-2" oninput="updateSharedContent(2)">When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</textarea>
+                    </div>
+
+                    <div class="edit-section">
+                        <label>Shared Paragraph 3: Benefits</label>
+                        <textarea id="shared-3" oninput="updateSharedContent(3)">Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</textarea>
+                    </div>
+
+                    <div class="edit-hint">
+                        Try editing any of the shared content above. Notice how your changes instantly appear in all four document views below, each with its own context and styling!
+                    </div>
                 </div>
+
+                <div class="button-group">
+                    <button onclick="highlightParagraph(1)" id="btn-1">Highlight Paragraph 1</button>
+                    <button onclick="highlightParagraph(2)" id="btn-2">Highlight Paragraph 2</button>
+                    <button onclick="highlightParagraph(3)" id="btn-3">Highlight Paragraph 3</button>
+                    <button onclick="clearHighlight()">Clear Highlights</button>
+                    <button onclick="resetContent()">Reset to Default</button>
+                </div>
+
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-box" style="background: linear-gradient(to right, #fff9c4 0%, #fff9c4 30%, #fffde7 30%); border-left: 5px solid #fbc02d;"></div>
-                        <span>Shared Content (appears in multiple views)</span>
+                        <span>Shared Content (editable above, synced everywhere)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-box" style="background: linear-gradient(to right, #e1f5fe 0%, #e1f5fe 30%, #f1f8fb 30%); border-left: 5px solid #0288d1;"></div>
-                        <span>Unique Content (specific to this view)</span>
+                        <span>Unique Content (specific to each view)</span>
                     </div>
                 </div>
             </div>
@@ -343,7 +431,7 @@
                         <div class="content-paragraph shared" data-paragraph="1">
                             <strong>Bidirectional Link Implementation</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                            <p class="shared-text" data-shared="1"></p>
                         </div>
 
                         <div class="content-paragraph unique">
@@ -360,7 +448,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="2">
                             <strong>Example Usage</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                            <p class="shared-text" data-shared="2"></p>
                         </div>
 
                         <div class="annotation">
@@ -370,7 +458,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="3">
                             <strong>Performance Benefits</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                            <p class="shared-text" data-shared="3"></p>
                         </div>
                     </div>
                 </div>
@@ -393,7 +481,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="1">
                             <strong>What Are Bidirectional Links?</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                            <p class="shared-text" data-shared="1"></p>
                         </div>
 
                         <div class="annotation">
@@ -403,7 +491,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="2">
                             <strong>Let's See an Example</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                            <p class="shared-text" data-shared="2"></p>
                         </div>
 
                         <div class="content-paragraph unique">
@@ -414,7 +502,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="3">
                             <strong>Why This Matters</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                            <p class="shared-text" data-shared="3"></p>
                         </div>
                     </div>
                 </div>
@@ -437,7 +525,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="1">
                             <strong>The Core Idea</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                            <p class="shared-text" data-shared="1"></p>
                         </div>
 
                         <div class="annotation">
@@ -447,7 +535,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="2">
                             <strong>Here's How It Works</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                            <p class="shared-text" data-shared="2"></p>
                         </div>
 
                         <div class="content-paragraph unique">
@@ -458,7 +546,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="3">
                             <strong>The Payoff</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                            <p class="shared-text" data-shared="3"></p>
                         </div>
 
                         <div class="annotation">
@@ -485,7 +573,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="1">
                             <strong>Theoretical Framework</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                            <p class="shared-text" data-shared="1"></p>
                         </div>
 
                         <div class="annotation">
@@ -495,7 +583,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="2">
                             <strong>Empirical Demonstration</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                            <p class="shared-text" data-shared="2"></p>
                         </div>
 
                         <div class="content-paragraph unique">
@@ -506,7 +594,7 @@ interface LinkRegistry {
                         <div class="content-paragraph shared" data-paragraph="3">
                             <strong>Results and Discussion</strong>
                             <span class="shared-indicator">SHARED</span>
-                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                            <p class="shared-text" data-shared="3"></p>
                         </div>
 
                         <div class="annotation">
@@ -518,7 +606,7 @@ interface LinkRegistry {
 
             <div class="info-panel">
                 <h3>🌟 Understanding Parallel Documents</h3>
-                <p>In Project Xanadu, the same content can exist in multiple documents simultaneously, each providing different context, annotations, and perspectives. The yellow-highlighted paragraphs are <strong>shared content</strong> that appears across all views, while blue paragraphs are unique to each perspective.</p>
+                <p>In Project Xanadu, the same content can exist in multiple documents simultaneously, each providing different context, annotations, and perspectives. The yellow-highlighted paragraphs are <strong>shared content</strong> that you can edit above - watch how changes propagate instantly to all four views!</p>
 
                 <div class="feature-grid">
                     <div class="feature-item">
@@ -527,7 +615,7 @@ interface LinkRegistry {
                     </div>
                     <div class="feature-item">
                         <h4>🔄 Automatic Updates</h4>
-                        <p>When shared content is updated, all views reflecting that content update simultaneously.</p>
+                        <p>When shared content is updated, all views reflecting that content update simultaneously - try it above!</p>
                     </div>
                     <div class="feature-item">
                         <h4>💡 Multiple Perspectives</h4>
@@ -547,7 +635,37 @@ interface LinkRegistry {
     </div>
 
     <script>
+        const defaultContent = {
+            1: "Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.",
+            2: "When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.",
+            3: "Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time."
+        };
+
         let currentHighlight = null;
+
+        function updateSharedContent(num) {
+            const content = document.getElementById(`shared-${num}`).value;
+            const elements = document.querySelectorAll(`[data-shared="${num}"]`);
+
+            elements.forEach(el => {
+                el.textContent = content;
+                el.parentElement.classList.add('updating');
+                setTimeout(() => {
+                    el.parentElement.classList.remove('updating');
+                }, 300);
+            });
+
+            // Show sync indicator
+            showSyncIndicator();
+        }
+
+        function showSyncIndicator() {
+            const indicator = document.getElementById('sync-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 1500);
+        }
 
         function highlightParagraph(num) {
             clearHighlight();
@@ -563,14 +681,10 @@ interface LinkRegistry {
             document.querySelectorAll('.button-group button').forEach(btn => {
                 btn.classList.remove('active');
             });
-            document.getElementById(`btn-${num}`).classList.add('active');
+            const btn = document.getElementById(`btn-${num}`);
+            if (btn) btn.classList.add('active');
 
-            // Show sync indicator
-            const indicator = document.getElementById('sync-indicator');
-            indicator.classList.add('show');
-            setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 2000);
+            showSyncIndicator();
         }
 
         function clearHighlight() {
@@ -582,6 +696,20 @@ interface LinkRegistry {
             });
             currentHighlight = null;
         }
+
+        function resetContent() {
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`shared-${i}`).value = defaultContent[i];
+                updateSharedContent(i);
+            }
+        }
+
+        // Initialize content on load
+        window.addEventListener('load', () => {
+            for (let i = 1; i <= 3; i++) {
+                updateSharedContent(i);
+            }
+        });
 
         // Add smooth scrolling to all document views
         document.querySelectorAll('.view-content').forEach(content => {
