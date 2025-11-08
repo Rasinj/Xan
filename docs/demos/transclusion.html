@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transclusion Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00796b 0%, #00897b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .demo-area {
+            padding: 40px;
+        }
+
+        .controls {
+            background: #e0f2f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #00796b;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #00796b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #00695c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .document {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .document:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .document-header {
+            background: linear-gradient(135deg, #00796b 0%, #00897b 100%);
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .document-header.source {
+            background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
+        }
+
+        .document-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .document-content {
+            padding: 20px;
+            min-height: 200px;
+        }
+
+        .source-text {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #bbdefb;
+            border-radius: 8px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            background: #f5f5f5;
+        }
+
+        .source-text:focus {
+            outline: none;
+            border-color: #2196f3;
+            background: white;
+        }
+
+        .content-block {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+
+        .original-content {
+            background: #f5f5f5;
+            border-left: 4px solid #9e9e9e;
+        }
+
+        .transcluded-content {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            position: relative;
+            animation: pulse 2s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { background: #e3f2fd; }
+            50% { background: #bbdefb; }
+        }
+
+        .transcluded-content.updated {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        .transclusion-meta {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .transclusion-meta::before {
+            content: '🔗';
+        }
+
+        .info-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            border-radius: 12px;
+            border-left: 6px solid #00796b;
+        }
+
+        .info-panel h3 {
+            color: #00796b;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .comparison-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .comparison-item h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comparison-item.bad h4::before {
+            content: '❌';
+        }
+
+        .comparison-item.good h4::before {
+            content: '✅';
+        }
+
+        .comparison-item ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .version-indicator {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📎 Transclusion Demo</h1>
+            <p>See how content-by-reference keeps everything synchronized and connected</p>
+        </div>
+
+        <div class="demo-area">
+            <div class="controls">
+                <h3>🎮 Try It Yourself!</h3>
+                <p style="margin-bottom: 15px;">Edit the source document below and watch the transcluded content update automatically across all documents.</p>
+                <div class="button-group">
+                    <button onclick="updateExample('scientific')">Load Scientific Example</button>
+                    <button onclick="updateExample('recipe')">Load Recipe Example</button>
+                    <button onclick="updateExample('code')">Load Code Example</button>
+                    <button onclick="resetDemo()">Reset Demo</button>
+                </div>
+            </div>
+
+            <div class="documents-grid">
+                <!-- Source Document -->
+                <div class="document">
+                    <div class="document-header source">
+                        <span>📝 Source Document</span>
+                        <span class="document-badge">Master</span>
+                    </div>
+                    <div class="document-content">
+                        <textarea class="source-text" id="source-content" oninput="updateTransclusions()" placeholder="Type something here...">The Project Xanadu vision includes several revolutionary concepts: bidirectional links that work both ways, transclusion for including content by reference rather than copying, and a universal version tracking system that maintains complete document history.</textarea>
+                    </div>
+                </div>
+
+                <!-- Target Document 1 -->
+                <div class="document">
+                    <div class="document-header">
+                        <span>📄 Research Paper</span>
+                        <span class="document-badge">Consumer</span>
+                    </div>
+                    <div class="document-content" id="doc1">
+                        <div class="content-block original-content">
+                            <strong>Introduction</strong><br>
+                            This paper explores hypertext systems and their evolution.
+                        </div>
+                        <div class="content-block transcluded-content" data-source="source-content">
+                            <div class="transcluded-text"></div>
+                            <div class="transclusion-meta">
+                                Transcluded from: Source Document <span class="version-indicator">v1</span>
+                            </div>
+                        </div>
+                        <div class="content-block original-content">
+                            <strong>Conclusion</strong><br>
+                            These innovations represent a fundamental rethinking of document systems.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Document 2 -->
+                <div class="document">
+                    <div class="document-header">
+                        <span>📰 Blog Post</span>
+                        <span class="document-badge">Consumer</span>
+                    </div>
+                    <div class="document-content" id="doc2">
+                        <div class="content-block original-content">
+                            <strong>What is Project Xanadu?</strong><br>
+                            Project Xanadu is Ted Nelson's vision for a better hypertext system.
+                        </div>
+                        <div class="content-block transcluded-content" data-source="source-content">
+                            <div class="transcluded-text"></div>
+                            <div class="transclusion-meta">
+                                Transcluded from: Source Document <span class="version-indicator">v1</span>
+                            </div>
+                        </div>
+                        <div class="content-block original-content">
+                            <strong>Why It Matters</strong><br>
+                            Understanding these concepts helps us imagine better information systems.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target Document 3 -->
+                <div class="document">
+                    <div class="document-header">
+                        <span>🎓 Educational Slide</span>
+                        <span class="document-badge">Consumer</span>
+                    </div>
+                    <div class="document-content" id="doc3">
+                        <div class="content-block original-content">
+                            <strong>Lesson 5: Advanced Hypertext</strong><br>
+                            Today we'll learn about Project Xanadu's key innovations.
+                        </div>
+                        <div class="content-block transcluded-content" data-source="source-content">
+                            <div class="transcluded-text"></div>
+                            <div class="transclusion-meta">
+                                Transcluded from: Source Document <span class="version-indicator">v1</span>
+                            </div>
+                        </div>
+                        <div class="content-block original-content">
+                            <strong>Assignment</strong><br>
+                            Compare these concepts with current web technologies.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>🌟 Understanding Transclusion</h3>
+                <div class="comparison">
+                    <div class="comparison-item bad">
+                        <h4>Traditional Copy-Paste</h4>
+                        <ul>
+                            <li>Source connection is <span class="highlight">lost</span></li>
+                            <li>Updates require manual changes everywhere</li>
+                            <li>Attribution becomes unclear</li>
+                            <li>Multiple copies diverge over time</li>
+                            <li>Storage is duplicated</li>
+                        </ul>
+                    </div>
+                    <div class="comparison-item good">
+                        <h4>Xanadu Transclusion</h4>
+                        <ul>
+                            <li>Source link is <span class="highlight">preserved</span></li>
+                            <li>Updates propagate automatically</li>
+                            <li>Attribution is built-in</li>
+                            <li>Content stays synchronized</li>
+                            <li>Single source of truth</li>
+                        </ul>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #ff9800;">
+                    <strong>💡 Try it yourself:</strong> Edit the source document above and watch how all three documents
+                    (Research Paper, Blog Post, and Educational Slide) update automatically. The blue boxes show transcluded
+                    content that maintains a live connection to its source!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let versionCounter = 1;
+
+        function updateTransclusions() {
+            const sourceContent = document.getElementById('source-content').value;
+            versionCounter++;
+
+            // Update all transcluded blocks
+            document.querySelectorAll('.transcluded-content').forEach(block => {
+                const textDiv = block.querySelector('.transcluded-text');
+                textDiv.textContent = sourceContent;
+
+                // Update version indicator
+                const versionBadge = block.querySelector('.version-indicator');
+                versionBadge.textContent = `v${versionCounter}`;
+
+                // Add animation class
+                block.classList.remove('updated');
+                void block.offsetWidth; // Trigger reflow
+                block.classList.add('updated');
+            });
+        }
+
+        function updateExample(type) {
+            const examples = {
+                scientific: `"In a recent study, we discovered that bidirectional links improve knowledge retention by 47% compared to traditional one-way hyperlinks. The study involved 200 participants over a 6-month period." - Journal of Hypertext Research, 2024`,
+
+                recipe: `INGREDIENTS:\n- 2 cups flour\n- 1 cup sugar\n- 3 eggs\n- 1 tsp vanilla extract\n\nThis recipe can be transcluded into multiple cookbooks, meal plans, and shopping lists. When you update the measurements, all references update automatically!`,
+
+                code: `function createBidirectionalLink(sourceDoc, targetDoc) {\n  // Establish two-way connection\n  sourceDoc.links.push(targetDoc);\n  targetDoc.backlinks.push(sourceDoc);\n  \n  // Register in central link database\n  linkRegistry.add(sourceDoc.id, targetDoc.id);\n  \n  return { from: sourceDoc.id, to: targetDoc.id };\n}`
+            };
+
+            document.getElementById('source-content').value = examples[type];
+            updateTransclusions();
+        }
+
+        function resetDemo() {
+            document.getElementById('source-content').value = 'The Project Xanadu vision includes several revolutionary concepts: bidirectional links that work both ways, transclusion for including content by reference rather than copying, and a universal version tracking system that maintains complete document history.';
+            versionCounter = 1;
+            updateTransclusions();
+        }
+
+        // Initialize
+        window.addEventListener('load', updateTransclusions);
+    </script>
+</body>
+</html>
