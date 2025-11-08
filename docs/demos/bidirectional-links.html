@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bidirectional Links Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .demo-area {
+            padding: 40px;
+        }
+
+        .controls {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #3f51b5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3f51b5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #303f9f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #graph {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .node {
+            position: absolute;
+            background: white;
+            border: 3px solid #3f51b5;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .node.selected {
+            border-color: #ff4081;
+            background: #fff3f8;
+            box-shadow: 0 0 0 4px rgba(255, 64, 129, 0.2);
+        }
+
+        .node.linked-from {
+            border-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .node.linked-to {
+            border-color: #ff9800;
+            background: #fff8f1;
+        }
+
+        .node-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .node-type {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .link-line {
+            stroke: #3f51b5;
+            stroke-width: 3;
+            fill: none;
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+
+        .link-line.active {
+            stroke: #ff4081;
+            opacity: 0.8;
+            stroke-width: 4;
+        }
+
+        .link-line.from-selected {
+            stroke: #4caf50;
+            opacity: 0.7;
+        }
+
+        .link-line.to-selected {
+            stroke: #ff9800;
+            opacity: 0.7;
+        }
+
+        .arrow {
+            fill: #3f51b5;
+            opacity: 0.6;
+        }
+
+        .arrow.active {
+            fill: #ff4081;
+            opacity: 1;
+        }
+
+        .info-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8eaf6;
+            border-radius: 8px;
+            border-left: 4px solid #3f51b5;
+        }
+
+        .info-panel h3 {
+            color: #3f51b5;
+            margin-bottom: 15px;
+        }
+
+        .info-panel ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-panel li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .info-panel li:last-child {
+            border-bottom: none;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Bidirectional Links Demo</h1>
+            <p>Experience how Xanadu's two-way links revolutionize navigation and discovery</p>
+        </div>
+
+        <div class="demo-area">
+            <div class="controls">
+                <h3>🎮 Interactive Controls</h3>
+                <div class="button-group">
+                    <button onclick="selectNode(null)">Clear Selection</button>
+                    <button onclick="addRandomLink()">Add Random Link</button>
+                    <button onclick="resetDemo()">Reset Demo</button>
+                    <button onclick="showWebComparison()">Compare with Web</button>
+                </div>
+            </div>
+
+            <div id="graph">
+                <svg id="link-svg"></svg>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #ff4081; background: #fff3f8;"></div>
+                    <span>Selected Node</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #4caf50; background: #f1f8f4;"></div>
+                    <span>Links FROM this node</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="border-color: #ff9800; background: #fff8f1;"></div>
+                    <span>Links TO this node (backlinks)</span>
+                </div>
+            </div>
+
+            <div class="info-panel" id="info-panel">
+                <h3>💡 Click on any document to see its bidirectional connections!</h3>
+                <p>In a traditional web, links only go one way. In Xanadu, every link creates a two-way connection, enabling:</p>
+                <ul>
+                    <li><strong>Backlink Discovery:</strong> See what documents reference this one</li>
+                    <li><strong>Knowledge Networks:</strong> Navigate relationships in both directions</li>
+                    <li><strong>Unbreakable Links:</strong> Links are maintained in a central registry</li>
+                    <li><strong>Context Preservation:</strong> Understand how documents relate to each other</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const documents = [
+            { id: 'doc1', title: 'Research Paper', type: 'Article', x: 15, y: 10 },
+            { id: 'doc2', title: 'Data Analysis', type: 'Report', x: 60, y: 15 },
+            { id: 'doc3', title: 'Methodology', type: 'Guide', x: 35, y: 45 },
+            { id: 'doc4', title: 'Case Study', type: 'Article', x: 70, y: 50 },
+            { id: 'doc5', title: 'Literature Review', type: 'Survey', x: 15, y: 75 },
+            { id: 'doc6', title: 'Conclusions', type: 'Summary', x: 65, y: 80 }
+        ];
+
+        let links = [
+            { from: 'doc1', to: 'doc2' },
+            { from: 'doc1', to: 'doc3' },
+            { from: 'doc2', to: 'doc4' },
+            { from: 'doc3', to: 'doc4' },
+            { from: 'doc3', to: 'doc5' },
+            { from: 'doc4', to: 'doc6' },
+            { from: 'doc5', to: 'doc6' }
+        ];
+
+        let selectedNode = null;
+
+        function init() {
+            const graph = document.getElementById('graph');
+            const svg = document.getElementById('link-svg');
+
+            // Clear existing content
+            graph.querySelectorAll('.node').forEach(n => n.remove());
+            svg.innerHTML = '';
+
+            // Create nodes
+            documents.forEach(doc => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.id = doc.id;
+                node.style.left = doc.x + '%';
+                node.style.top = doc.y + '%';
+                node.innerHTML = `
+                    <div class="node-title">${doc.title}</div>
+                    <div class="node-type">${doc.type}</div>
+                `;
+                node.onclick = () => selectNode(doc.id);
+                graph.appendChild(node);
+            });
+
+            // Draw links
+            drawLinks();
+        }
+
+        function drawLinks() {
+            const svg = document.getElementById('link-svg');
+            svg.innerHTML = '';
+
+            links.forEach(link => {
+                const fromNode = document.getElementById(link.from);
+                const toNode = document.getElementById(link.to);
+
+                if (!fromNode || !toNode) return;
+
+                const fromRect = fromNode.getBoundingClientRect();
+                const toRect = toNode.getBoundingClientRect();
+                const graphRect = document.getElementById('graph').getBoundingClientRect();
+
+                const x1 = fromRect.left + fromRect.width / 2 - graphRect.left;
+                const y1 = fromRect.top + fromRect.height / 2 - graphRect.top;
+                const x2 = toRect.left + toRect.width / 2 - graphRect.left;
+                const y2 = toRect.top + toRect.height / 2 - graphRect.top;
+
+                // Create curved path
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const dr = Math.sqrt(dx * dx + dy * dy);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${(y1 + y2) / 2 - 30} ${x2} ${y2}`);
+                path.classList.add('link-line');
+                path.dataset.from = link.from;
+                path.dataset.to = link.to;
+
+                // Add arrow marker
+                const angle = Math.atan2(dy, dx);
+                const arrowSize = 10;
+                const arrowX = x2 - Math.cos(angle) * 60;
+                const arrowY = y2 - Math.sin(angle) * 60;
+
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                const points = [
+                    [arrowX, arrowY],
+                    [arrowX - arrowSize * Math.cos(angle - Math.PI / 6), arrowY - arrowSize * Math.sin(angle - Math.PI / 6)],
+                    [arrowX - arrowSize * Math.cos(angle + Math.PI / 6), arrowY - arrowSize * Math.sin(angle + Math.PI / 6)]
+                ];
+                arrow.setAttribute('points', points.map(p => p.join(',')).join(' '));
+                arrow.classList.add('arrow');
+                arrow.dataset.from = link.from;
+                arrow.dataset.to = link.to;
+
+                svg.appendChild(path);
+                svg.appendChild(arrow);
+            });
+        }
+
+        function selectNode(nodeId) {
+            selectedNode = nodeId;
+
+            // Clear all selections
+            document.querySelectorAll('.node').forEach(n => {
+                n.classList.remove('selected', 'linked-from', 'linked-to');
+            });
+
+            document.querySelectorAll('.link-line, .arrow').forEach(l => {
+                l.classList.remove('active', 'from-selected', 'to-selected');
+            });
+
+            if (!nodeId) {
+                updateInfoPanel(null);
+                return;
+            }
+
+            // Highlight selected node
+            const selectedElement = document.getElementById(nodeId);
+            selectedElement.classList.add('selected');
+
+            // Find and highlight connections
+            const linksFrom = links.filter(l => l.from === nodeId);
+            const linksTo = links.filter(l => l.to === nodeId);
+
+            linksFrom.forEach(link => {
+                document.getElementById(link.to).classList.add('linked-from');
+                document.querySelectorAll(`[data-from="${link.from}"][data-to="${link.to}"]`).forEach(el => {
+                    el.classList.add('from-selected');
+                });
+            });
+
+            linksTo.forEach(link => {
+                document.getElementById(link.from).classList.add('linked-to');
+                document.querySelectorAll(`[data-from="${link.from}"][data-to="${link.to}"]`).forEach(el => {
+                    el.classList.add('to-selected');
+                });
+            });
+
+            updateInfoPanel(nodeId, linksFrom, linksTo);
+        }
+
+        function updateInfoPanel(nodeId, linksFrom = [], linksTo = []) {
+            const panel = document.getElementById('info-panel');
+
+            if (!nodeId) {
+                panel.innerHTML = `
+                    <h3>💡 Click on any document to see its bidirectional connections!</h3>
+                    <p>In a traditional web, links only go one way. In Xanadu, every link creates a two-way connection.</p>
+                `;
+                return;
+            }
+
+            const doc = documents.find(d => d.id === nodeId);
+
+            let html = `<h3>📄 ${doc.title}</h3>`;
+
+            if (linksFrom.length > 0) {
+                html += `<p><strong style="color: #4caf50;">⬇️ This document links to:</strong></p><ul>`;
+                linksFrom.forEach(link => {
+                    const target = documents.find(d => d.id === link.to);
+                    html += `<li>→ ${target.title} (${target.type})</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            if (linksTo.length > 0) {
+                html += `<p><strong style="color: #ff9800;">⬆️ Backlinks - documents that reference this:</strong></p><ul>`;
+                linksTo.forEach(link => {
+                    const source = documents.find(d => d.id === link.from);
+                    html += `<li>← ${source.title} (${source.type})</li>`;
+                });
+                html += `</ul>`;
+            }
+
+            if (linksFrom.length === 0 && linksTo.length === 0) {
+                html += `<p>This document has no connections yet.</p>`;
+            }
+
+            html += `<p style="margin-top: 15px; padding: 10px; background: rgba(63,81,181,0.1); border-radius: 6px;">
+                <strong>🌟 Key Insight:</strong> On the traditional web, you'd only see the ${linksFrom.length} outgoing link${linksFrom.length !== 1 ? 's' : ''}.
+                With Xanadu, you also discover the ${linksTo.length} backlink${linksTo.length !== 1 ? 's' : ''} automatically!
+            </p>`;
+
+            panel.innerHTML = html;
+        }
+
+        function addRandomLink() {
+            const availablePairs = [];
+            documents.forEach(from => {
+                documents.forEach(to => {
+                    if (from.id !== to.id && !links.find(l => l.from === from.id && l.to === to.id)) {
+                        availablePairs.push({ from: from.id, to: to.id });
+                    }
+                });
+            });
+
+            if (availablePairs.length > 0) {
+                const newLink = availablePairs[Math.floor(Math.random() * availablePairs.length)];
+                links.push(newLink);
+                drawLinks();
+                if (selectedNode) {
+                    selectNode(selectedNode);
+                }
+            }
+        }
+
+        function resetDemo() {
+            links = [
+                { from: 'doc1', to: 'doc2' },
+                { from: 'doc1', to: 'doc3' },
+                { from: 'doc2', to: 'doc4' },
+                { from: 'doc3', to: 'doc4' },
+                { from: 'doc3', to: 'doc5' },
+                { from: 'doc4', to: 'doc6' },
+                { from: 'doc5', to: 'doc6' }
+            ];
+            selectedNode = null;
+            init();
+        }
+
+        function showWebComparison() {
+            alert('🌐 Traditional Web vs. Xanadu:\n\n' +
+                  '❌ Web: If you\'re reading a page, you can\'t see who links to it\n' +
+                  '✅ Xanadu: Backlinks are automatically tracked and discoverable\n\n' +
+                  '❌ Web: Broken links when pages move or are deleted\n' +
+                  '✅ Xanadu: Content-addressed links that never break\n\n' +
+                  '❌ Web: One-way citation tracking\n' +
+                  '✅ Xanadu: Bidirectional knowledge networks\n\n' +
+                  'Try clicking nodes to see backlinks in action!');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+        window.addEventListener('resize', () => {
+            drawLinks();
+            if (selectedNode) selectNode(selectedNode);
+        });
+    </script>
+</body>
+</html>
