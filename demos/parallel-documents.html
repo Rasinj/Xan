@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parallel Documents Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #7f00ff 0%, #e100ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .demo-area {
+            padding: 40px;
+        }
+
+        .controls {
+            background: #f3e5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #6a1b9a;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: #6a1b9a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #4a148c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button.active {
+            background: #9c27b0;
+            box-shadow: 0 0 0 3px rgba(156, 39, 176, 0.3);
+        }
+
+        .parallel-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .document-view {
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            max-height: 700px;
+        }
+
+        .document-view:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+        }
+
+        .view-header {
+            padding: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .view-header.technical {
+            background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
+        }
+
+        .view-header.educational {
+            background: linear-gradient(135deg, #388e3c 0%, #4caf50 100%);
+        }
+
+        .view-header.casual {
+            background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+        }
+
+        .view-header.academic {
+            background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+        }
+
+        .view-meta {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-top: 5px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .view-content {
+            padding: 25px;
+            flex: 1;
+            overflow-y: auto;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .content-paragraph {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .content-paragraph:hover {
+            transform: translateX(5px);
+        }
+
+        .content-paragraph.shared {
+            background: linear-gradient(to right, #fff9c4 0%, #fff9c4 5px, #fffde7 5px);
+            border-left: 5px solid #fbc02d;
+        }
+
+        .content-paragraph.unique {
+            background: linear-gradient(to right, #e1f5fe 0%, #e1f5fe 5px, #f1f8fb 5px);
+            border-left: 5px solid #0288d1;
+        }
+
+        .annotation {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-style: italic;
+            font-size: 0.95em;
+        }
+
+        .annotation::before {
+            content: '💭 ';
+            font-style: normal;
+        }
+
+        .shared-indicator {
+            display: inline-block;
+            background: #fbc02d;
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75em;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        .info-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-radius: 12px;
+            border-left: 6px solid #6a1b9a;
+        }
+
+        .info-panel h3 {
+            color: #6a1b9a;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .feature-item h4 {
+            color: #6a1b9a;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sync-indicator.show {
+            display: block;
+        }
+
+        .highlight-shared {
+            background: #fff59d !important;
+            transition: background 0.5s;
+        }
+
+        .connection-line {
+            stroke: #9c27b0;
+            stroke-width: 2;
+            fill: none;
+            stroke-dasharray: 5, 5;
+            opacity: 0.6;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔀 Parallel Documents Demo</h1>
+            <p>Experience how the same content exists in multiple contexts simultaneously</p>
+        </div>
+
+        <div class="demo-area">
+            <div class="controls">
+                <h3>🎮 Interactive Parallel Views</h3>
+                <p style="margin-bottom: 15px;">Select different content sections to see how they appear across different document contexts.</p>
+                <div class="button-group">
+                    <button onclick="highlightParagraph(1)" id="btn-1">Highlight Core Concept</button>
+                    <button onclick="highlightParagraph(2)" id="btn-2">Highlight Example</button>
+                    <button onclick="highlightParagraph(3)" id="btn-3">Highlight Benefits</button>
+                    <button onclick="clearHighlight()">Clear Highlights</button>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: linear-gradient(to right, #fff9c4 0%, #fff9c4 30%, #fffde7 30%); border-left: 5px solid #fbc02d;"></div>
+                        <span>Shared Content (appears in multiple views)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: linear-gradient(to right, #e1f5fe 0%, #e1f5fe 30%, #f1f8fb 30%); border-left: 5px solid #0288d1;"></div>
+                        <span>Unique Content (specific to this view)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="parallel-view">
+                <!-- Technical View -->
+                <div class="document-view">
+                    <div class="view-header technical">
+                        <div>📘 Technical Documentation</div>
+                        <div class="view-meta">
+                            <span>👁️ Developer Audience</span>
+                            <span>🏷️ API Reference</span>
+                        </div>
+                    </div>
+                    <div class="view-content">
+                        <div class="content-paragraph shared" data-paragraph="1">
+                            <strong>Bidirectional Link Implementation</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                        </div>
+
+                        <div class="content-paragraph unique">
+                            <strong>API Specification</strong>
+                            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
+interface LinkRegistry {
+  createLink(from: DocId, to: DocId): Link;
+  getOutgoingLinks(doc: DocId): Link[];
+  getIncomingLinks(doc: DocId): Link[];
+  deleteLink(linkId: string): void;
+}</pre>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="2">
+                            <strong>Example Usage</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                        </div>
+
+                        <div class="annotation">
+                            Technical Note: The link registry uses a graph database to ensure O(1) lookup time for both forward and backward link traversal.
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="3">
+                            <strong>Performance Benefits</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Educational View -->
+                <div class="document-view">
+                    <div class="view-header educational">
+                        <div>📚 Educational Material</div>
+                        <div class="view-meta">
+                            <span>👁️ Student Audience</span>
+                            <span>🏷️ Tutorial</span>
+                        </div>
+                    </div>
+                    <div class="view-content">
+                        <div class="content-paragraph unique">
+                            <strong>Welcome to Hypertext 101!</strong>
+                            <p>Today we're learning about an exciting concept that makes information more connected and easier to explore.</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="1">
+                            <strong>What Are Bidirectional Links?</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                        </div>
+
+                        <div class="annotation">
+                            Think of it like a two-way street: if you can go from A to B, you can also go from B to A!
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="2">
+                            <strong>Let's See an Example</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                        </div>
+
+                        <div class="content-paragraph unique">
+                            <strong>Try It Yourself!</strong>
+                            <p>Imagine you're reading a Wikipedia article. Wouldn't it be cool if you could instantly see every other article that links to the one you're reading? That's what bidirectional links do!</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="3">
+                            <strong>Why This Matters</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Casual Blog View -->
+                <div class="document-view">
+                    <div class="view-header casual">
+                        <div>✍️ Blog Post</div>
+                        <div class="view-meta">
+                            <span>👁️ General Audience</span>
+                            <span>🏷️ Opinion</span>
+                        </div>
+                    </div>
+                    <div class="view-content">
+                        <div class="content-paragraph unique">
+                            <strong>The Web Could Have Been So Much Better</strong>
+                            <p>Ever wonder why the internet feels broken sometimes? Ted Nelson did, back in the 1960s, and he had a brilliant solution.</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="1">
+                            <strong>The Core Idea</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                        </div>
+
+                        <div class="annotation">
+                            Seriously, why didn't we build the web this way from the start? 🤔
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="2">
+                            <strong>Here's How It Works</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                        </div>
+
+                        <div class="content-paragraph unique">
+                            <strong>The Current Web is Weird</strong>
+                            <p>Think about it: when someone links to your blog post, you have no idea unless you use Google Analytics or some other tracker. In Xanadu's vision, you'd know immediately and automatically.</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="3">
+                            <strong>The Payoff</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                        </div>
+
+                        <div class="annotation">
+                            Imagine never having to manually track citations or references again. That's the dream! 🚀
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic View -->
+                <div class="document-view">
+                    <div class="view-header academic">
+                        <div>🎓 Academic Paper</div>
+                        <div class="view-meta">
+                            <span>👁️ Researcher Audience</span>
+                            <span>🏷️ Peer-Reviewed</span>
+                        </div>
+                    </div>
+                    <div class="view-content">
+                        <div class="content-paragraph unique">
+                            <strong>Abstract</strong>
+                            <p>This paper examines the theoretical foundations and practical implications of bidirectional hypertext systems as proposed in Nelson's Project Xanadu framework.</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="1">
+                            <strong>Theoretical Framework</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links maintain connections in both directions, allowing navigation from any linked document back to its references. This is implemented through a central link registry.</p>
+                        </div>
+
+                        <div class="annotation">
+                            cf. Nelson (1965), Bush (1945), Engelbart (1962)
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="2">
+                            <strong>Empirical Demonstration</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>When Document A creates a link to Document B, both documents are immediately aware of the connection. Users viewing Document B can navigate back to Document A without any additional setup.</p>
+                        </div>
+
+                        <div class="content-paragraph unique">
+                            <strong>Comparative Analysis</strong>
+                            <p>Unlike unidirectional hypertext systems (Berners-Lee et al., 1989), bidirectional architectures provide inherent graph traversal capabilities, enabling novel approaches to citation analysis and knowledge discovery.</p>
+                        </div>
+
+                        <div class="content-paragraph shared" data-paragraph="3">
+                            <strong>Results and Discussion</strong>
+                            <span class="shared-indicator">SHARED</span>
+                            <p>Bidirectional links eliminate the need for expensive backlink discovery algorithms. Citation analysis becomes instant, and document relationships can be queried in real-time.</p>
+                        </div>
+
+                        <div class="annotation">
+                            Our experiments show a 94% reduction in link traversal latency compared to traditional web crawling methods (p < 0.001).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3>🌟 Understanding Parallel Documents</h3>
+                <p>In Project Xanadu, the same content can exist in multiple documents simultaneously, each providing different context, annotations, and perspectives. The yellow-highlighted paragraphs are <strong>shared content</strong> that appears across all views, while blue paragraphs are unique to each perspective.</p>
+
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h4>🎯 Same Core, Different Context</h4>
+                        <p>Essential information remains consistent while each view adds its own perspective and audience-specific details.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔄 Automatic Updates</h4>
+                        <p>When shared content is updated, all views reflecting that content update simultaneously.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>💡 Multiple Perspectives</h4>
+                        <p>Technical, educational, casual, and academic audiences all see content optimized for their needs.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🔗 Preserved Connections</h4>
+                        <p>Links between shared content are maintained across all parallel views, creating a rich knowledge network.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sync-indicator" id="sync-indicator">
+        ✓ All views synchronized
+    </div>
+
+    <script>
+        let currentHighlight = null;
+
+        function highlightParagraph(num) {
+            clearHighlight();
+            currentHighlight = num;
+
+            const paragraphs = document.querySelectorAll(`[data-paragraph="${num}"]`);
+            paragraphs.forEach(p => {
+                p.classList.add('highlight-shared');
+                p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            // Update button states
+            document.querySelectorAll('.button-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`btn-${num}`).classList.add('active');
+
+            // Show sync indicator
+            const indicator = document.getElementById('sync-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function clearHighlight() {
+            document.querySelectorAll('.content-paragraph').forEach(p => {
+                p.classList.remove('highlight-shared');
+            });
+            document.querySelectorAll('.button-group button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            currentHighlight = null;
+        }
+
+        // Add smooth scrolling to all document views
+        document.querySelectorAll('.view-content').forEach(content => {
+            content.style.scrollBehavior = 'smooth';
+        });
+    </script>
+</body>
+</html>
